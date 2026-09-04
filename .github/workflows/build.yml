@@ -1,0 +1,26 @@
+# felitronics-eqview CI — the whole library is JUCE-free, so every platform runs the whole suite.
+# Nothing is checked out beside this repo, which means core arrives by its PIN: a green run here
+# proves the pinned version builds, not the sibling checkout a developer happens to have.
+name: tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  tests:
+    name: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release
+      - name: Build
+        run: cmake --build build --config Release -j 4
+      - name: Test
+        run: ctest --test-dir build -C Release --output-on-failure
