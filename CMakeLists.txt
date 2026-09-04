@@ -118,7 +118,7 @@ if(FELITRONICS_EQVIEW_TESTS_WITH_JUCE)
     add_executable(eqview_juce_compile_check tests/JuceConsumerCompileCheck.cpp)
     target_link_libraries(eqview_juce_compile_check PRIVATE
         felitronics::eqview
-        juce::juce_graphics
+        juce::juce_gui_basics                # Drawable (the glyph icons) lives here, not in juce_graphics
         juce::juce_recommended_warning_flags)
     target_compile_definitions(eqview_juce_compile_check PRIVATE
         JUCE_STANDALONE_APPLICATION=1

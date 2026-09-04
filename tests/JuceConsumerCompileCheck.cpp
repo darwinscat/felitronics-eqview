@@ -9,12 +9,14 @@
 // — the things that would otherwise surface inside somebody's plugin build.
 
 #include <felitronics/eqview/PlotSurface.h>
+#include <felitronics/eqview/FilterShapes.h>
 
 #include <cstdio>
 
 int main()
 {
     using namespace felitronics::eqview;
+    namespace eq = felitronics::eq;
 
     PlotSurface surface;
     surface.map.width      = 800.0f;
@@ -41,6 +43,22 @@ int main()
     empty.map.width = 0.0f;
     empty.paintFrequencyRuler (g, 0.0f, 10.0f);
     empty.paintLevelGrid (g, 0.0f, 0.0f, 0.0, 0.0);
+
+    // Every glyph, at the size a menu uses it: a type that fell out of the switch would draw nothing.
+    for (const auto t : { eq::FilterType::Bell, eq::FilterType::BandPass, eq::FilterType::Notch,
+                          eq::FilterType::LowShelf, eq::FilterType::HighShelf, eq::FilterType::HighPass,
+                          eq::FilterType::LowPass, eq::FilterType::Tilt, eq::FilterType::AllPass })
+    {
+        const auto path = shapes::path (t, { 0.0f, 0.0f, 24.0f, 14.0f });
+        if (path.isEmpty())
+        {
+            std::printf ("FAIL: a filter type draws nothing\n");
+            return 1;
+        }
+
+        if (auto icon = shapes::icon (t, juce::Colours::white))
+            icon->drawWithin (g, { 0.0f, 0.0f, 24.0f, 14.0f }, juce::RectanglePlacement::centred, 1.0f);
+    }
 
     std::printf ("eqview JUCE consumer compile check: every piece drew.\n");
     return 0;

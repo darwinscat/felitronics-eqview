@@ -36,15 +36,22 @@ mystery link failure later.
 
 ## What's here
 
-Nothing in this list needs JUCE. That is on purpose: this is the arithmetic of an EQ view, and it
-is the half that can be tested. The drawing layers are being lifted out of TabbyEQ next, and they
-will take their colours as a theme.
+The first three need no JUCE at all — that is on purpose: this is the arithmetic of an EQ view, and
+it is the half that can be tested. The drawing pieces come after them, and they take their colours
+and their type as parameters, so a product's look stays the product's.
 
 | | |
 |---|---|
 | `felitronics/eqview/PlotGrid.h` | Where a logarithmic axis puts its ticks, which of them carry a number, and how a scale thins its numbers when the window shrinks. |
 | `felitronics/eqview/HandleMath.h` | Where a filter's node and its Q/slope handles sit on the plot, and how a filter type behaves under a drag. |
 | `felitronics/eqview/TraceSet.h` | The response curves: per-band, per-lane and composite, evaluated at a display rate so the shape reads as the analog intent at any sample rate. |
+
+And two that draw, so they want `juce_gui_basics` from you:
+
+| | |
+|---|---|
+| `felitronics/eqview/PlotSurface.h` | The ground the view is read against: the ruler, the level lines, and the numbers along both edges. Every colour and the type are parameters. |
+| `felitronics/eqview/FilterShapes.h` | The little line-drawings of each filter type, for a menu or a button. The shapes are settled — changing one changes the family's look. |
 
 The coordinate map itself — frequency ↔ pixel, dB ↔ pixel — lives in core as
 `felitronics/analysis/PlotMap.h`, because it is pure arithmetic and other things need it too. This
