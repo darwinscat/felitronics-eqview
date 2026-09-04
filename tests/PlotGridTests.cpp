@@ -68,8 +68,8 @@ int main()
         check (stepSane,         "every step is in 1..9");
         check (isDecadeMultiple, "every tick is step x a whole power of ten");
 
-        check (t.front().first == 20.0 && t.front().second == 2, "first tick is 20 Hz (step 2)");
-        check (t.back().first == 20000.0 && t.back().second == 2, "last tick is 20 kHz (step 2)");
+        check (nearEq (t.front().first, 20.0, 1e-9) && t.front().second == 2, "first tick is 20 Hz (step 2)");
+        check (nearEq (t.back().first, 20000.0, 1e-9) && t.back().second == 2, "last tick is 20 kHz (step 2)");
 
         // A degenerate map must draw nothing rather than loop or divide by zero.
         felitronics::analysis::PlotMap bad; bad.freqMin = 0.0; bad.freqMax = 0.0;
@@ -128,7 +128,7 @@ int main()
         const double minGap = 50.0;
         bool kept = true, monotone = true;
         int  lastDensity = -1;
-        float widthAtFirstDense = 0.0f;
+        float widthAtFirstDense = -1.0f;      // "not seen yet" as a value the axis can never have
 
         for (float w = 120.0f; w <= 4000.0f; w += 20.0f)
         {
@@ -140,7 +140,7 @@ int main()
                               : set == g::LabelSet::HalfDecades ? 1 : 0;
             if (density < lastDensity) monotone = false;
             lastDensity = density;
-            if (density == 3 && widthAtFirstDense == 0.0f) widthAtFirstDense = w;
+            if (density == 3 && widthAtFirstDense < 0.0f) widthAtFirstDense = w;
 
             if (set == g::LabelSet::Decades)
                 continue;
