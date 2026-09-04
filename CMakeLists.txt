@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.22)
-project(felitronics_eqview VERSION 0.1.0 LANGUAGES CXX)
+project(felitronics_eqview VERSION 0.1.0 LANGUAGES C CXX)   # C: juce_graphics compiles Sheenbidi (.c) in the JUCE test tier
 
 # ----------------------------------------------------------------------------
 # felitronics-eqview — the EQ VIEW of the Darwin's Cat family: the log-frequency plot every product
@@ -66,6 +66,14 @@ target_link_libraries(felitronics_eqview INTERFACE felitronics::eq felitronics::
 
 # --- tests (top-level only: a consumer's FetchContent does not inherit them) ------------------------
 option(FELITRONICS_EQVIEW_BUILD_TESTS "Build felitronics-eqview self-tests" "${PROJECT_IS_TOP_LEVEL}")
+
+# Most of this library is JUCE-free and its suites run anywhere. The drawing layer (PlotSurface.h) is
+# not: it needs juce_graphics, which the CONSUMER supplies. Its gate is a compile check rather than a
+# unit — pixels are judged by eye against a product's own screens — and it is OFF by default so a bare
+# `cmake && ctest` stays offline. CI turns it on (and fetches JUCE); point FELITRONICS_EQVIEW_JUCE_SRC
+# at a local checkout to skip the network.
+option(FELITRONICS_EQVIEW_TESTS_WITH_JUCE "Also compile the JUCE-facing headers against a real JUCE" OFF)
+set(FELITRONICS_EQVIEW_JUCE_SRC "" CACHE PATH "Optional path to a local JUCE source tree (skips the network fetch)")
 if(NOT FELITRONICS_EQVIEW_BUILD_TESTS)
     return()
 endif()
@@ -94,3 +102,31 @@ foreach(unit PlotGrid HandleMath TraceSet)
     target_compile_options(${_target} PRIVATE ${EQVIEW_STRICT_FLAGS})
     add_test(NAME ${_target} COMMAND ${_target})
 endforeach()
+
+# --- the JUCE tier: the drawing layer, through a real consumer's flags ------------------------------
+if(FELITRONICS_EQVIEW_TESTS_WITH_JUCE)
+    include(FetchContent)
+    if(FELITRONICS_EQVIEW_JUCE_SRC)
+        FetchContent_Declare(juce SOURCE_DIR "${FELITRONICS_EQVIEW_JUCE_SRC}")
+    else()
+        FetchContent_Declare(juce
+            GIT_REPOSITORY https://github.com/juce-framework/JUCE.git
+            GIT_TAG        8.0.14)   # the family's pinned JUCE
+    endif()
+    FetchContent_MakeAvailable(juce)
+
+    add_executable(eqview_juce_compile_check tests/JuceConsumerCompileCheck.cpp)
+    target_link_libraries(eqview_juce_compile_check PRIVATE
+        felitronics::eqview
+        juce::juce_graphics
+        juce::juce_recommended_warning_flags)
+    target_compile_definitions(eqview_juce_compile_check PRIVATE
+        JUCE_STANDALONE_APPLICATION=1
+        JUCE_USE_CURL=0
+        JUCE_WEB_BROWSER=0)
+    target_compile_features(eqview_juce_compile_check PRIVATE cxx_std_20)
+    if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
+        target_compile_options(eqview_juce_compile_check PRIVATE -Werror)   # the recommended flags must be CLEAN
+    endif()
+    add_test(NAME eqview_juce_compile_check COMMAND eqview_juce_compile_check)
+endif()

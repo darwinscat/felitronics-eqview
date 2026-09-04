@@ -10,16 +10,22 @@ on:
 
 jobs:
   tests:
-    name: ${{ matrix.os }}
+    name: ${{ matrix.os }}${{ matrix.juce == 'ON' && ' + JUCE gate' || '' }}
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        include:
+          - os: ubuntu-latest
+            juce: "OFF"
+          - os: windows-latest
+            juce: "OFF"
+          - os: macos-latest
+            juce: "ON"      # one platform compiles the drawing layer against a real JUCE
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
       - name: Configure
-        run: cmake -B build -DCMAKE_BUILD_TYPE=Release
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release -DFELITRONICS_EQVIEW_TESTS_WITH_JUCE=${{ matrix.juce }}
       - name: Build
         run: cmake --build build --config Release -j 4
       - name: Test
